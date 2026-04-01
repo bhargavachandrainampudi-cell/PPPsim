@@ -1,104 +1,128 @@
 <!doctype html>
 <html lang="en" class="h-full">
-<head>
+ <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pet Door Simulator</title>
+  <title>Pet Door Tracker</title>
   <script src="https://tailwindcss.com"></script>
+  <!-- REMOVED: Arduino/Sensor SDKs -->
   <link href="https://googleapis.com" rel="stylesheet">
   <style>
-    body { font-family: 'Nunito', sans-serif; }
-    .sim-active { animation: pulse-glow 1.5s ease-in-out infinite; }
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
-      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+    body {
+      box-sizing: border-box;
+      font-family: 'Nunito', sans-serif;
     }
-    .log-entry { animation: slide-in 0.3s ease-out; }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.8); }
+    }
+    
     @keyframes slide-in {
-      from { opacity: 0; transform: translateY(-10px); }
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-  </style>
-</head>
-<body class="h-full bg-[#1a1a2e] text-white">
-  <div id="app-wrapper" class="min-h-screen p-6 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
     
-    <!-- Status Card -->
-    <div class="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/10 shadow-2xl mb-8 text-center">
-      <div id="door-status-icon" class="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-500">
-        <span class="text-4xl">🏠</span>
-      </div>
-      <h1 class="text-3xl font-extrabold mb-2">Pet Door Tracker</h1>
-      <p id="status-text" class="text-slate-400 font-semibold uppercase tracking-widest text-sm">System Idle</p>
-      
-      <!-- Simulation Button -->
-      <button id="sim-btn" class="mt-8 w-full py-4 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all rounded-2xl font-bold text-lg shadow-lg">
-        Start Simulation
-      </button>
+    .sensor-active {
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+    
+    .notification-slide {
+      animation: slide-in 0.5s ease-out;
+    }
+    
+    .fade-in {
+      animation: fade-in 0.6s ease-out forwards;
+    }
+    
+    .activity-item {
+      animation: fade-in 0.4s ease-out;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://tailwindcss.com/3.4.17" type="text/javascript"></script>
+  <script src="https://jsdelivr.net" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app-wrapper" class="h-full w-full overflow-auto" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
+   
+   <!-- Notification Toast -->
+   <div id="notification-toast" class="fixed top-4 right-4 z-50 hidden">
+    <div class="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl notification-slide flex items-center gap-3 max-w-sm">
+     <div class="text-3xl">
+      🐾
+     </div>
+     <div class="flex-1">
+      <p class="font-bold">Activity Detected!</p>
+      <p id="toast-text" class="text-sm opacity-90">Pet passed through door</p>
+     </div>
     </div>
+   </div>
 
-    <!-- Activity Log -->
-    <div class="w-full max-w-md bg-black/40 rounded-2xl p-6 border border-white/5">
-      <h2 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-tighter">Live Activity Log</h2>
-      <div id="activity-log" class="space-y-3 h-48 overflow-y-auto pr-2 custom-scrollbar">
-        <p class="text-slate-500 text-sm italic">Waiting for simulation...</p>
-      </div>
-    </div>
+   <!-- START SIM BUTTON (Replaced Sensor UI) -->
+   <div class="flex flex-col items-center justify-center min-h-screen px-6">
+     <div id="status-indicator" class="w-32 h-32 rounded-full bg-slate-800 flex items-center justify-center mb-8 transition-all duration-500">
+       <i data-lucide="door-open" class="text-white w-12 h-12"></i>
+     </div>
+
+     <button id="sim-btn" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95">
+       Start Simulation
+     </button>
+
+     <div id="activity-feed" class="mt-12 w-full max-w-sm space-y-4">
+       <!-- Log items go here -->
+     </div>
+   </div>
+
   </div>
 
   <script>
-    const simBtn = document.getElementById('sim-btn');
-    const statusText = document.getElementById('status-text');
-    const statusIcon = document.getElementById('door-status-icon');
-    const log = document.getElementById('activity-log');
-    
-    let isSimulating = false;
-    const pets = ['Buddy 🐕', 'Luna 🐈', 'Oliver 🐈‍⬛', 'Max 🐕‍🦺'];
-    const actions = ['exited to the garden', 'returned inside', 'is peaking through', 'is waiting at the door'];
+    // Initialize Lucide Icons
+    lucide.createIcons();
 
-    function addLog(message) {
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const entry = document.createElement('div');
-      entry.className = 'log-entry flex justify-between items-center text-sm border-b border-white/5 pb-2';
-      entry.innerHTML = `<span>${message}</span><span class="text-blue-400 font-mono text-xs">${time}</span>`;
-      log.prepend(entry);
-      if (log.children.length > 6) log.lastElementChild.remove();
+    const simBtn = document.getElementById('sim-btn');
+    const toast = document.getElementById('notification-toast');
+    const indicator = document.getElementById('status-indicator');
+    const feed = document.getElementById('activity-feed');
+    
+    let isRunning = false;
+
+    function triggerEvent() {
+      const pets = ["Luna", "Buddy", "Oliver"];
+      const pet = pets[Math.floor(Math.random() * pets.length)];
+      
+      // Trigger Toast
+      document.getElementById('toast-text').innerText = `${pet} used the door!`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3000);
+
+      // Add to Activity Feed
+      const item = document.createElement('div');
+      item.className = "activity-item bg-white/10 p-4 rounded-xl text-white flex justify-between items-center border border-white/10";
+      item.innerHTML = `<span>${pet} entered/exited</span> <span class="text-xs opacity-50">Just now</span>`;
+      feed.prepend(item);
     }
 
     simBtn.addEventListener('click', () => {
-      if (!isSimulating) {
-        // Start Sim
-        isSimulating = true;
-        simBtn.textContent = 'Stop Simulation';
-        simBtn.classList.replace('bg-blue-600', 'bg-red-500');
-        statusText.textContent = 'Simulating Activity...';
-        statusText.classList.add('text-blue-400');
-        statusIcon.classList.add('sim-active', 'bg-blue-900/50');
-        log.innerHTML = '';
-        addLog('🚀 Simulation initialized');
-        
-        window.simInterval = setInterval(() => {
-          const pet = pets[Math.floor(Math.random() * pets.length)];
-          const action = actions[Math.floor(Math.random() * actions.length)];
-          addLog(`${pet} ${action}`);
-          
-          // Visual pop on icon
-          statusIcon.classList.add('scale-110');
-          setTimeout(() => statusIcon.classList.remove('scale-110'), 200);
-        }, 3000);
-
+      isRunning = !isRunning;
+      
+      if (isRunning) {
+        simBtn.innerText = "Stop Simulation";
+        simBtn.classList.replace('bg-emerald-500', 'bg-rose-500');
+        indicator.classList.add('sensor-active', 'bg-emerald-500/20');
+        window.simTimer = setInterval(triggerEvent, 4000);
       } else {
-        // Stop Sim
-        isSimulating = false;
-        clearInterval(window.simInterval);
-        simBtn.textContent = 'Start Simulation';
-        simBtn.classList.replace('bg-red-500', 'bg-blue-600');
-        statusText.textContent = 'System Idle';
-        statusText.classList.remove('text-blue-400');
-        statusIcon.classList.remove('sim-active', 'bg-blue-900/50');
-        addLog('🛑 Simulation ended');
+        simBtn.innerText = "Start Simulation";
+        simBtn.classList.replace('bg-rose-500', 'bg-emerald-500');
+        indicator.classList.remove('sensor-active', 'bg-emerald-500/20');
+        clearInterval(window.simTimer);
       }
     });
   </script>
-</body>
+ </body>
 </html>
