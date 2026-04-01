@@ -1,107 +1,147 @@
 <!doctype html>
 <html lang="en" class="h-full">
-<head>
+ <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pet Door Tracker</title>
-  <script src="https://tailwindcss.com"></script>
-  <link href="https://googleapis.com" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- REMOVED: /_sdk/element_sdk.js -->
+  <!-- REMOVED: /_sdk/data_sdk.js -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
   <style>
-    body { box-sizing: border-box; font-family: 'Nunito', sans-serif; }
-    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); } 50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.8); } }
-    @keyframes slide-in { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes fade-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .sensor-active { animation: pulse-glow 1.5s ease-in-out infinite; }
-    .notification-slide { animation: slide-in 0.5s ease-out; }
-    .fade-in { animation: fade-in 0.6s ease-out forwards; }
-    .activity-item { animation: fade-in 0.4s ease-out; }
+    body {
+      box-sizing: border-box;
+      font-family: 'Nunito', sans-serif;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(34, 197, 94, 0.8); }
+    }
+    
+    @keyframes slide-in {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .sensor-active {
+      animation: pulse-glow 1.5s ease-in-out infinite;
+    }
+    
+    .notification-slide {
+      animation: slide-in 0.5s ease-out;
+    }
+    
+    .fade-in {
+      animation: fade-in 0.6s ease-out forwards;
+    }
+    
+    .activity-item {
+      animation: fade-in 0.4s ease-out;
+    }
   </style>
-  <script src="https://tailwindcss.com/3.4.17"></script>
-  <script src="https://jsdelivr.net"></script>
-</head>
-<body class="h-full">
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
   <div id="app-wrapper" class="h-full w-full overflow-auto" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
-    <div id="notification-toast" class="fixed top-4 right-4 z-50 hidden">
-      <div class="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl notification-slide flex items-center gap-3 max-w-sm">
-        <div class="text-3xl">🐾</div>
-        <div><p class="font-bold">Pet Alert!</p><p id="notification-message" class="text-sm opacity-90"></p></div>
-      </div>
+   <!-- Notification Toast -->
+   <div id="notification-toast" class="fixed top-4 right-4 z-50 hidden">
+    <div class="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl notification-slide flex items-center gap-3 max-sm">
+     <div class="text-3xl">
+      🐾
+     </div>
+     <div>
+      <p class="font-bold" id="notification-title">Pet Alert!</p>
+      <p class="text-sm opacity-90" id="notification-message"></p>
+     </div>
     </div>
-
-    <!-- Login Screen -->
-    <div id="login-screen" class="min-h-full flex flex-col items-center justify-center p-6">
-      <div class="w-full max-w-md fade-in text-center">
-        <div class="text-7xl mb-4">🏠🐕</div>
-        <h1 class="text-4xl font-extrabold text-white mb-8">Pet Door Tracker</h1>
-        <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 space-y-5 text-left">
-          <input type="text" placeholder="Username" class="w-full px-5 py-4 rounded-xl bg-white/90 focus:ring-4 focus:ring-emerald-400/50 outline-none">
-          <input type="password" placeholder="Password" class="w-full px-5 py-4 rounded-xl bg-white/90 focus:ring-4 focus:ring-emerald-400/50 outline-none">
-          <button onclick="showScreen('setup-screen')" class="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl text-lg hover:scale-[1.02] transition-all">Login 🐾</button>
-        </div>
+   </div><!-- Login Screen -->
+   <div id="login-screen" class="min-h-full flex flex-col items-center justify-center p-6">
+    <div class="w-full max-w-md fade-in">
+     <div class="text-center mb-8">
+      <div class="text-7xl mb-4">
+       🏠🐕
       </div>
-    </div>
-
-    <!-- Setup Screen -->
-    <div id="setup-screen" class="min-h-full flex flex-col items-center justify-center p-6 hidden">
-      <div class="w-full max-w-md fade-in bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 space-y-6">
-        <h2 class="text-white font-bold text-2xl text-center">Simulation Setup</h2>
-        <input type="text" id="owner-name" placeholder="Your Name" class="w-full px-5 py-4 rounded-xl bg-white/90 outline-none">
-        <input type="text" id="pet-names" placeholder="Pet Names (e.g. Max, Bella)" class="w-full px-5 py-4 rounded-xl bg-white/90 outline-none">
-        <div class="border-t border-white/20 pt-4">
-          <p id="sim-status" class="text-amber-300 text-sm mb-4">Simulator Status: Idle</p>
-          <button onclick="verifySim()" class="w-full py-4 bg-blue-500 text-white font-bold rounded-xl mb-3">Verify Simulator</button>
-          <button id="start-btn" onclick="startTracking()" class="w-full py-4 bg-emerald-500 text-white font-bold rounded-xl opacity-50 cursor-not-allowed" disabled>Start Tracking 🐾</button>
-        </div>
+      <h1 id="login-title" class="text-4xl font-extrabold text-white mb-2">Pet Door Tracker</h1>
+      <p class="text-slate-300 text-lg">Monitor your pet's activity</p>
+     </div>
+     <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+      <div class="space-y-5">
+       <div>
+        <label for="login-username" class="block text-white font-semibold mb-2 text-sm">Username</label> <input type="text" id="login-username" placeholder="Enter your username" class="w-full px-5 py-4 rounded-xl bg-white/90 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:ring-4 focus:ring-emerald-400/50 transition-all">
+       </div>
+       <div>
+        <label for="login-password" class="block text-white font-semibold mb-2 text-sm">Password</label> <input type="password" id="login-password" placeholder="Enter your password" class="w-full px-5 py-4 rounded-xl bg-white/90 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:ring-4 focus:ring-emerald-400/50 transition-all">
+       </div>
+       <div id="login-error" class="text-red-400 text-sm text-center hidden"></div><button onclick="handleLogin()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl text-lg transition-all transform hover:scale-[1.02] shadow-lg shadow-emerald-500/30"> Login 🐾 </button>
+       <div class="flex gap-3"><button onclick="goToSignup()" class="flex-1 py-3 bg-white/10 hover:bg-white/20 text-emerald-400 font-semibold rounded-xl transition-all border border-emerald-400/50"> Sign Up </button> <button onclick="goToForgotPassword()" class="flex-1 py-3 bg-white/10 hover:bg-white/20 text-blue-400 font-semibold rounded-xl transition-all border border-blue-400/50"> Forgot Password? </button>
+       </div>
       </div>
+     </div>
     </div>
-
-    <!-- Dashboard -->
-    <div id="tracking-screen" class="min-h-full p-6 hidden">
-      <div class="max-w-md mx-auto">
-        <div id="status-card" class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 text-center mb-8 transition-all">
-          <div id="status-icon" class="w-20 h-20 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/30">
-            <i data-lucide="activity" class="text-emerald-400 w-8 h-8"></i>
-          </div>
-          <h2 class="text-white text-xl font-bold uppercase tracking-widest">Live Feed</h2>
-        </div>
-        <div id="activity-list" class="space-y-4"></div>
+   </div><!-- Setup Screen (Modified for Simulation) -->
+   <div id="setup-screen" class="min-h-full flex flex-col items-center justify-center p-6 hidden">
+    <div class="w-full max-w-md fade-in">
+     <div class="text-center mb-8">
+      <div class="text-7xl mb-4">
+       🏠🐕
       </div>
+      <h1 id="main-title" class="text-4xl font-extrabold text-white mb-2">Pet Door Tracker</h1>
+      <p id="subtitle" class="text-slate-300 text-lg">Monitor your pet's activity</p>
+     </div>
+     <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
+      <div class="space-y-5">
+       <!-- Your Name Section -->
+       <div>
+        <label for="owner-name" class="block text-white font-semibold mb-2 text-sm">Your Name</label> <input type="text" id="owner-name" placeholder="Enter your name" class="w-full px-5 py-4 rounded-xl bg-white/90 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:ring-4 focus:ring-emerald-400/50 transition-all">
+       </div><!-- Address Section -->
+       <div>
+        <label for="owner-address" class="block text-white font-semibold mb-2 text-sm">Your Address</label> <input type="text" id="owner-address" placeholder="Enter your address" class="w-full px-5 py-4 rounded-xl bg-white/90 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:ring-4 focus:ring-emerald-400/50 transition-all">
+       </div><!-- Pet Names Section -->
+       <div class="border-t border-white/20 pt-5">
+        <h2 class="text-white font-bold text-lg mb-4">Your Pets</h2><label for="pet-names" class="block text-white font-semibold mb-2 text-sm">Pet Names (comma-separated)</label> <input type="text" id="pet-names" placeholder="e.g., Max, Bella, Charlie" class="w-full px-5 py-4 rounded-xl bg-white/90 text-slate-800 placeholder-slate-400 font-medium focus:outline-none focus:ring-4 focus:ring-emerald-400/50 transition-all">
+        <p class="text-slate-400 text-xs mt-2">Add multiple pets separated by commas</p>
+       </div><!-- Simulation Section -->
+       <div class="border-t border-white/20 pt-5">
+        <h2 class="text-white font-bold text-lg mb-4">💻 Simulation Mode</h2>
+        <p class="text-slate-400 text-sm mb-4">No hardware needed. Click verify to initialize the simulator.</p>
+        <p id="sensor-1-status" class="text-slate-400 text-sm mb-2">Simulator Status: <span class="text-amber-300">Ready to initialize</span></p>
+       </div><!-- Verify Button -->
+       <div class="pt-2">
+        <button onclick="verifySensors()" class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold rounded-xl text-lg transition-all transform hover:scale-[1.02] shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"> <span class="text-xl">✓</span> <span>Verify Simulator</span> </button>
+       </div><!-- Start Tracking Button --> <button id="start-btn" onclick="startTracking()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-xl text-lg transition-all transform hover:scale-[1.02] shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" disabled> Start Simulation 🐾 </button> <!-- Logout Button --> <button onclick="logout()" class="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl transition-all border border-white/20"> Logout </button>
+      </div>
+     </div>
     </div>
-  </div>
+   </div>
 
   <script>
-    lucide.createIcons();
-    function showScreen(id) {
-      ['login-screen', 'setup-screen', 'tracking-screen'].forEach(s => document.getElementById(s).classList.add('hidden'));
-      document.getElementById(id).classList.remove('hidden');
+    function handleLogin() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('setup-screen').classList.remove('hidden');
     }
-    function verifySim() {
-      const s = document.getElementById('sim-status');
-      s.innerText = "Simulator Ready ✓"; s.className = "text-emerald-400 text-sm mb-4";
+    
+    function verifySensors() {
+      const status = document.getElementById('sensor-1-status');
+      status.innerHTML = 'Simulator Status: <span class="text-emerald-400">Verified ✓</span>';
       document.getElementById('start-btn').disabled = false;
-      document.getElementById('start-btn').classList.remove('opacity-50', 'cursor-not-allowed');
     }
+    
     function startTracking() {
-      showScreen('tracking-screen');
-      const pets = document.getElementById('pet-names').value.split(',').map(p => p.trim());
-      setInterval(() => {
-        const pet = pets[Math.floor(Math.random() * pets.length)] || "Pet";
-        const action = Math.random() > 0.5 ? "entered" : "exited";
-        const toast = document.getElementById('notification-toast');
-        document.getElementById('notification-message').innerText = `${pet} has ${action}`;
-        toast.classList.remove('hidden');
-        setTimeout(() => toast.classList.add('hidden'), 3000);
-        
-        const item = document.createElement('div');
-        item.className = "activity-item bg-white/5 border border-white/10 p-5 rounded-2xl text-white flex justify-between";
-        item.innerHTML = `<div><p class="font-bold">${pet}</p><p class="text-xs opacity-50">${action}</p></div><span class="text-[10px] opacity-30">${new Date().toLocaleTimeString()}</span>`;
-        const list = document.getElementById('activity-list');
-        list.prepend(item);
-        if (list.children.length > 6) list.lastElementChild.remove();
-        document.getElementById('status-card').classList.add('sensor-active');
-        setTimeout(() => document.getElementById('status-card').classList.remove('sensor-active'), 1000);
-      }, 5000);
+      alert("Simulation started! Pet activity will appear shortly.");
+      // You can add logic here to trigger the toast periodically
+    }
+    
+    function logout() {
+      location.reload();
     }
   </script>
-</body>
+ </body>
 </html>
