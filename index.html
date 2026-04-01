@@ -143,5 +143,55 @@
       location.reload();
     }
   </script>
+     <script>
+    lucide.createIcons();
+
+    function handleLogin() {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('setup-screen').classList.remove('hidden');
+    }
+    
+    function verifySensors() {
+      const status = document.getElementById('sensor-1-status');
+      status.innerHTML = 'Simulator Status: <span class="text-emerald-400 font-bold">Verified ✓</span>';
+      
+      const startBtn = document.getElementById('start-btn');
+      startBtn.disabled = false;
+      startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+    
+    function startTracking() {
+      const toast = document.getElementById('notification-toast');
+      const msg = document.getElementById('notification-message');
+      const petInput = document.getElementById('pet-names').value;
+      
+      // Get the names you typed in
+      const pets = petInput.split(',').map(p => p.trim()).filter(p => p !== "");
+      
+      alert("Simulation Active! Watch for alerts in the top right.");
+
+      // Start the loop to show alerts automatically
+      setInterval(() => {
+        const pet = pets.length > 0 ? pets[Math.floor(Math.random() * pets.length)] : "A pet";
+        const action = Math.random() > 0.5 ? "came inside" : "went outside";
+        
+        // Update and show your toast
+        msg.innerText = `${pet} just ${action}!`;
+        toast.classList.remove('hidden');
+        
+        // Hide it after 3 seconds
+        setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 3000);
+      }, 6000); // Happens every 6 seconds
+    }
+    
+    function logout() {
+      location.reload();
+    }
+  </script>
+</body>
+</html>
+
  </body>
 </html>
