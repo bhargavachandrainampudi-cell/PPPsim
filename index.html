@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pet Door Tracker</title>
   <script src="https://tailwindcss.com"></script>
-  <!-- REMOVED: Arduino/Sensor SDKs -->
+  <!-- Simulation Script replaces SDKs -->
   <link href="https://googleapis.com" rel="stylesheet">
   <style>
     body {
@@ -50,77 +50,51 @@
  </head>
  <body class="h-full">
   <div id="app-wrapper" class="h-full w-full overflow-auto" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
-   
-   <!-- Notification Toast -->
+   <!-- Notification Toast (Exactly your code) -->
    <div id="notification-toast" class="fixed top-4 right-4 z-50 hidden">
     <div class="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl notification-slide flex items-center gap-3 max-w-sm">
      <div class="text-3xl">
       🐾
      </div>
-     <div class="flex-1">
-      <p class="font-bold">Activity Detected!</p>
-      <p id="toast-text" class="text-sm opacity-90">Pet passed through door</p>
+     <div>
+       <p class="font-bold">Activity Detected!</p>
+       <p id="toast-msg">A pet has used the door.</p>
      </div>
     </div>
    </div>
 
-   <!-- START SIM BUTTON (Replaced Sensor UI) -->
-   <div class="flex flex-col items-center justify-center min-h-screen px-6">
-     <div id="status-indicator" class="w-32 h-32 rounded-full bg-slate-800 flex items-center justify-center mb-8 transition-all duration-500">
-       <i data-lucide="door-open" class="text-white w-12 h-12"></i>
-     </div>
-
-     <button id="sim-btn" class="bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 px-8 rounded-2xl shadow-xl transition-all active:scale-95">
-       Start Simulation
-     </button>
-
-     <div id="activity-feed" class="mt-12 w-full max-w-sm space-y-4">
-       <!-- Log items go here -->
+   <!-- Your Container -->
+   <div class="flex flex-col items-center justify-center min-h-screen">
+     <div id="status-box" class="p-10 bg-white/5 rounded-3xl border border-white/10 text-center">
+       <div id="door-icon" class="mb-4 text-emerald-400">
+         <i data-lucide="log-in" class="w-12 h-12 mx-auto"></i>
+       </div>
+       <button id="sim-btn" class="bg-emerald-500 text-white font-bold py-3 px-10 rounded-xl hover:bg-emerald-400 transition-all">
+         Start Sim
+       </button>
      </div>
    </div>
 
   </div>
 
   <script>
-    // Initialize Lucide Icons
     lucide.createIcons();
-
-    const simBtn = document.getElementById('sim-btn');
+    const btn = document.getElementById('sim-btn');
     const toast = document.getElementById('notification-toast');
-    const indicator = document.getElementById('status-indicator');
-    const feed = document.getElementById('activity-feed');
-    
-    let isRunning = false;
+    const icon = document.getElementById('door-icon');
+    let active = false;
 
-    function triggerEvent() {
-      const pets = ["Luna", "Buddy", "Oliver"];
-      const pet = pets[Math.floor(Math.random() * pets.length)];
-      
-      // Trigger Toast
-      document.getElementById('toast-text').innerText = `${pet} used the door!`;
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3000);
-
-      // Add to Activity Feed
-      const item = document.createElement('div');
-      item.className = "activity-item bg-white/10 p-4 rounded-xl text-white flex justify-between items-center border border-white/10";
-      item.innerHTML = `<span>${pet} entered/exited</span> <span class="text-xs opacity-50">Just now</span>`;
-      feed.prepend(item);
-    }
-
-    simBtn.addEventListener('click', () => {
-      isRunning = !isRunning;
-      
-      if (isRunning) {
-        simBtn.innerText = "Stop Simulation";
-        simBtn.classList.replace('bg-emerald-500', 'bg-rose-500');
-        indicator.classList.add('sensor-active', 'bg-emerald-500/20');
-        window.simTimer = setInterval(triggerEvent, 4000);
+    btn.addEventListener('click', () => {
+      active = !active;
+      if(active) {
+        btn.innerText = "Stop Sim";
+        icon.classList.add('sensor-active');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
       } else {
-        simBtn.innerText = "Start Simulation";
-        simBtn.classList.replace('bg-rose-500', 'bg-emerald-500');
-        indicator.classList.remove('sensor-active', 'bg-emerald-500/20');
-        clearInterval(window.simTimer);
+        btn.innerText = "Start Sim";
+        icon.classList.remove('sensor-active');
+        toast.classList.add('hidden');
       }
     });
   </script>
