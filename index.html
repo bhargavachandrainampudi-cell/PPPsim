@@ -1,138 +1,104 @@
 <!doctype html>
 <html lang="en" class="h-full">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Door Tracker - Sim Mode</title>
-    <script src="https://tailwindcss.com"></script>
-    <link href="https://googleapis.com" rel="stylesheet">
-    <style>
-        body { font-family: 'Nunito', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .activity-row { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pet Door Simulator</title>
+  <script src="https://tailwindcss.com"></script>
+  <link href="https://googleapis.com" rel="stylesheet">
+  <style>
+    body { font-family: 'Nunito', sans-serif; }
+    .sim-active { animation: pulse-glow 1.5s ease-in-out infinite; }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(59, 130, 246, 0.8); }
+    }
+    .log-entry { animation: slide-in 0.3s ease-out; }
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body class="h-full bg-[#1a1a2e] text-white">
-    <div id="app-wrapper" class="min-h-full flex flex-col items-center p-6" style="background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);">
-        
-        <!-- Notification Toast -->
-        <div id="notification-toast" class="fixed top-4 right-4 z-50 hidden">
-            <div class="bg-emerald-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/20">
-                <span class="text-2xl">🐾</span>
-                <div>
-                    <p class="font-bold">Pet Alert!</p>
-                    <p class="text-sm opacity-90" id="notification-message"></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Login Screen -->
-        <div id="login-screen" class="w-full max-w-md mt-20 fade-in">
-            <div class="text-center mb-8">
-                <div class="text-7xl mb-4">🏠🐕</div>
-                <h1 class="text-4xl font-extrabold mb-2">Pet Door Tracker</h1>
-                <p class="text-slate-300">Simulation Mode Ready</p>
-            </div>
-            <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20">
-                <button onclick="showSetup()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-600 font-bold rounded-xl text-lg transition-all shadow-lg shadow-emerald-500/30">
-                    Enter Dashboard 🐾
-                </button>
-            </div>
-        </div>
-
-        <!-- Setup & Tracking Screen -->
-        <div id="setup-screen" class="w-full max-w-2xl hidden fade-in">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Controls -->
-                <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">⚙️ Control Panel</h2>
-                    <div class="space-y-4">
-                        <button id="sim-toggle-btn" onclick="toggleSimulation()" class="w-full py-4 bg-purple-500 hover:bg-purple-600 font-bold rounded-xl transition-all shadow-lg shadow-purple-500/20">
-                            Enable Simulation Mode
-                        </button>
-                        <div class="p-4 bg-black/20 rounded-xl text-sm border border-white/10">
-                            <p id="status-text" class="text-slate-400 italic">Simulation is currently OFF.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live Feed -->
-                <div class="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/20 flex flex-col h-[400px]">
-                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">📜 Activity Feed</h2>
-                    <div id="activity-feed" class="flex-1 overflow-y-auto space-y-2 pr-2 text-sm">
-                        <p class="text-slate-500 text-center mt-10">No recent activity...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div id="app-wrapper" class="min-h-screen p-6 flex flex-col items-center justify-center bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
+    
+    <!-- Status Card -->
+    <div class="w-full max-w-md bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/10 shadow-2xl mb-8 text-center">
+      <div id="door-status-icon" class="w-24 h-24 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 transition-all duration-500">
+        <span class="text-4xl">🏠</span>
+      </div>
+      <h1 class="text-3xl font-extrabold mb-2">Pet Door Tracker</h1>
+      <p id="status-text" class="text-slate-400 font-semibold uppercase tracking-widest text-sm">System Idle</p>
+      
+      <!-- Simulation Button -->
+      <button id="sim-btn" class="mt-8 w-full py-4 bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all rounded-2xl font-bold text-lg shadow-lg">
+        Start Simulation
+      </button>
     </div>
 
-    <script>
-        let isSimulating = false;
-        let simInterval;
-        const pets = ["Max", "Bella", "Charlie", "Luna"];
-        const actions = ["is approaching the door", "went outside 🌳", "came back inside 🏠", "is waiting at the door"];
+    <!-- Activity Log -->
+    <div class="w-full max-w-md bg-black/40 rounded-2xl p-6 border border-white/5">
+      <h2 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-tighter">Live Activity Log</h2>
+      <div id="activity-log" class="space-y-3 h-48 overflow-y-auto pr-2 custom-scrollbar">
+        <p class="text-slate-500 text-sm italic">Waiting for simulation...</p>
+      </div>
+    </div>
+  </div>
 
-        function showSetup() {
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('setup-screen').classList.remove('hidden');
-        }
+  <script>
+    const simBtn = document.getElementById('sim-btn');
+    const statusText = document.getElementById('status-text');
+    const statusIcon = document.getElementById('door-status-icon');
+    const log = document.getElementById('activity-log');
+    
+    let isSimulating = false;
+    const pets = ['Buddy 🐕', 'Luna 🐈', 'Oliver 🐈‍⬛', 'Max 🐕‍🦺'];
+    const actions = ['exited to the garden', 'returned inside', 'is peaking through', 'is waiting at the door'];
 
-        function toggleSimulation() {
-            isSimulating = !isSimulating;
-            const btn = document.getElementById('sim-toggle-btn');
-            const status = document.getElementById('status-text');
+    function addLog(message) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const entry = document.createElement('div');
+      entry.className = 'log-entry flex justify-between items-center text-sm border-b border-white/5 pb-2';
+      entry.innerHTML = `<span>${message}</span><span class="text-blue-400 font-mono text-xs">${time}</span>`;
+      log.prepend(entry);
+      if (log.children.length > 6) log.lastElementChild.remove();
+    }
 
-            if (isSimulating) {
-                btn.innerText = "Stop Simulation 🛑";
-                btn.classList.replace('bg-purple-500', 'bg-red-500');
-                status.innerText = "Simulation running... Events occurring randomly.";
-                status.classList.replace('text-slate-400', 'text-emerald-400');
-                startEventLoop();
-            } else {
-                btn.innerText = "Enable Simulation Mode";
-                btn.classList.replace('bg-red-500', 'bg-purple-500');
-                status.innerText = "Simulation is currently OFF.";
-                status.classList.replace('text-emerald-400', 'text-slate-400');
-                clearTimeout(simInterval);
-            }
-        }
+    simBtn.addEventListener('click', () => {
+      if (!isSimulating) {
+        // Start Sim
+        isSimulating = true;
+        simBtn.textContent = 'Stop Simulation';
+        simBtn.classList.replace('bg-blue-600', 'bg-red-500');
+        statusText.textContent = 'Simulating Activity...';
+        statusText.classList.add('text-blue-400');
+        statusIcon.classList.add('sim-active', 'bg-blue-900/50');
+        log.innerHTML = '';
+        addLog('🚀 Simulation initialized');
+        
+        window.simInterval = setInterval(() => {
+          const pet = pets[Math.floor(Math.random() * pets.length)];
+          const action = actions[Math.floor(Math.random() * actions.length)];
+          addLog(`${pet} ${action}`);
+          
+          // Visual pop on icon
+          statusIcon.classList.add('scale-110');
+          setTimeout(() => statusIcon.classList.remove('scale-110'), 200);
+        }, 3000);
 
-        function startEventLoop() {
-            if (!isSimulating) return;
-
-            const pet = pets[Math.floor(Math.random() * pets.length)];
-            const action = actions[Math.floor(Math.random() * actions.length)];
-            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            triggerEvent(pet, action, time);
-
-            // Schedule next event in 3-7 seconds
-            simInterval = setTimeout(startEventLoop, Math.random() * 4000 + 3000);
-        }
-
-        function triggerEvent(pet, action, time) {
-            // Update Toast
-            const toast = document.getElementById('notification-toast');
-            document.getElementById('notification-message').innerText = `${pet} ${action}`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
-
-            // Update Feed
-            const feed = document.getElementById('activity-feed');
-            if (feed.innerText.includes("No recent activity")) feed.innerHTML = "";
-            
-            const row = document.createElement('div');
-            row.className = "activity-row bg-white/5 p-3 rounded-lg border border-white/10 flex justify-between items-center";
-            row.innerHTML = `
-                <span><strong>${pet}</strong> ${action}</span>
-                <span class="text-xs text-slate-400">${time}</span>
-            `;
-            feed.prepend(row);
-        }
-    </script>
+      } else {
+        // Stop Sim
+        isSimulating = false;
+        clearInterval(window.simInterval);
+        simBtn.textContent = 'Start Simulation';
+        simBtn.classList.replace('bg-red-500', 'bg-blue-600');
+        statusText.textContent = 'System Idle';
+        statusText.classList.remove('text-blue-400');
+        statusIcon.classList.remove('sim-active', 'bg-blue-900/50');
+        addLog('🛑 Simulation ended');
+      }
+    });
+  </script>
 </body>
 </html>
-
